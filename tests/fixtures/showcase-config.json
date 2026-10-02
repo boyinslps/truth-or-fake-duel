@@ -1,0 +1,65 @@
+{
+  "target_score": 7,
+  "max_rounds": 12,
+  "topics_per_match": 10,
+  "opening_hand": {
+    "message": 2,
+    "verify": 3,
+    "function": 5
+  },
+  "hand_limit": {
+    "message": 5,
+    "utility": 8
+  },
+  "utility_deck": {
+    "verify": 10,
+    "viral_spread": 1,
+    "investigate": 3,
+    "double": 2,
+    "careful": 2,
+    "reroll": 1,
+    "conservative": 1,
+    "direct_duel": 3
+  },
+  "timers_sec": {
+    "select_message": 90,
+    "reveal": 3,
+    "action": 180,
+    "duel_ready": 3,
+    "duel_answer": 20,
+    "duel_reveal": 8,
+    "round_result": 90,
+    "match_confirm": 30
+  },
+  "disconnect_forfeit_sec": 90,
+  "approved_icons": [
+    "sun",
+    "moon",
+    "paw-print",
+    "leaf",
+    "flask-conical",
+    "cloud-sun",
+    "droplet",
+    "snowflake",
+    "bird",
+    "fish",
+    "bug",
+    "camera",
+    "image",
+    "globe",
+    "mountain",
+    "landmark",
+    "zap",
+    "timer",
+    "ruler",
+    "thermometer"
+  ],
+  "categories": [
+    "自然科學",
+    "地球與天文",
+    "地理",
+    "歷史常識",
+    "日常生活",
+    "網路資訊"
+  ]
+}
