@@ -138,7 +138,7 @@ export function Home() {
   const acc = profile.accuracy === null ? null : Math.round(profile.accuracy * 100);
   return (
     <main className="lobby">
-      <div className="lobby-card home">
+      <div className="lobby-card">
         <Logo />
         <section className="profile-card">
           <NicknameEditor nickname={profile.nickname} />
