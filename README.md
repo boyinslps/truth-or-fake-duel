@@ -184,7 +184,7 @@ flowchart LR
 需要 [Node.js](https://nodejs.org) 22 以上。
 
 ```bash
-git clone https://github.com/OWNER/truth-or-fake-duel.git
+git clone https://github.com/boyinslps/truth-or-fake-duel.git
 cd truth-or-fake-duel
 npm install
 npm run build      # 建置前端到 dist/
