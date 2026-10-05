@@ -274,4 +274,8 @@ npm run validate   # 只驗證題庫與設定
 - 帳號與回饋存在本機的 `data/players.json`（已加入 `.gitignore`，不會上傳）。登入只用年級、班、座號，**不設密碼**，適合在老師看得到的課堂使用；若要放到公開網路，請先加上密碼與老師密碼。
 - 排行榜與畫面只顯示暱稱；老師頁才看得到登記的姓名。
 - 題庫中的假消息是依事實查核網站報告改寫的教學用途內容，並非原文轉載；若有疑慮請開 issue。
-- 授權：尚未指定。
+- 授權：保留所有權利（All rights reserved），詳見 [LICENSE](LICENSE)。
+
+---
+
+<div align="center"><sub>made by 資訊老師黃博胤</sub></div>

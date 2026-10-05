@@ -103,3 +103,8 @@ export function Dots({ n, max = 3, color }: { n: number; max?: number; color: st
     </span>
   );
 }
+
+/** 署名：每個畫面右下角固定顯示（作者的固定規範）。 */
+export function Credit() {
+  return <div className="credit">made by 資訊老師黃博胤</div>;
+}

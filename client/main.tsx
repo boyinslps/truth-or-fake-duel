@@ -8,7 +8,7 @@ import { Leaderboard } from './ui/Rank';
 import { Teacher } from './ui/Teacher';
 import { FeedbackModal } from './ui/Feedback';
 import { HelpModal } from './ui/Tutorial';
-import { Toasts } from './ui/common';
+import { Credit, Toasts } from './ui/common';
 
 function App() {
   const net = useNet();
@@ -43,9 +43,19 @@ function App() {
       <FeedbackModal />
       <HelpModal />
       <Toasts />
+      <Credit />
     </>
   );
 }
 
 const isTeacher = window.location.pathname.replace(/\/+$/, '') === '/teacher';
-createRoot(document.getElementById('root')!).render(isTeacher ? <Teacher /> : <App />);
+createRoot(document.getElementById('root')!).render(
+  isTeacher ? (
+    <>
+      <Teacher />
+      <Credit />
+    </>
+  ) : (
+    <App />
+  ),
+);
