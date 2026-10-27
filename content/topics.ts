@@ -8,7 +8,7 @@ import type { Topic, TopicMessage, TrapType } from '../shared/types';
 type F = [content: string, source: string];
 type M = [statement: string, answer: boolean, difficulty: 1 | 2 | 3, trap: TrapType, key: number | number[], explanation: string];
 
-function topic(id: string, title: string, category: string, facts: F[], messages: M[]): Topic {
+export function topic(id: string, title: string, category: string, facts: F[], messages: M[]): Topic {
   return {
     id,
     title,

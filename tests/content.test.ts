@@ -9,9 +9,9 @@ describe('題庫驗證（企畫書 11.6）', () => {
     expect(validateContent(loadContent(), iconSet)).toEqual([]);
   });
 
-  it('30 個議題，每個議題 3 筆資訊 ↔ 3 則消息，每筆資訊都是某則消息的關鍵證據', () => {
+  it('50 個議題，每個議題 3 筆資訊 ↔ 3 則消息，每筆資訊都是某則消息的關鍵證據', () => {
     const { topics } = loadContent();
-    expect(topics).toHaveLength(30);
+    expect(topics).toHaveLength(50);
     for (const t of topics) {
       expect(t.facts).toHaveLength(3);
       expect(t.messages).toHaveLength(3);

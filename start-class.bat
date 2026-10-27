@@ -3,8 +3,8 @@ rem Double-click to start the game server for class. Students open the address s
 chcp 65001 >nul
 cd /d "%~dp0"
 
-rem Use the portable Node.js if it exists, otherwise the installed one.
-set "NODE_DIR=D:\tools\node-v22.23.3-win-x64"
+rem Use the Node.js bundled in this folder (node-portable) so a USB copy works anywhere; fall back to installed Node.
+set "NODE_DIR=%~dp0node-portable"
 if exist "%NODE_DIR%\node.exe" set "PATH=%NODE_DIR%;%PATH%"
 where node >nul 2>nul
 if errorlevel 1 (

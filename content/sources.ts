@@ -21,5 +21,13 @@ export const S = {
   TFC: { name: '台灣事實查核中心', url: 'https://tfc-taiwan.org.tw/' },
   SCIAM: { name: 'Scientific American', url: 'https://www.scientificamerican.com/' },
   GA: { name: 'Geoscience Australia', url: 'https://www.ga.gov.au/' },
+  NIST: { name: 'NIST 美國國家標準暨技術研究院', url: 'https://www.nist.gov/' },
+  CERT: { name: '台灣電腦網路危機處理暨協調中心', url: 'https://www.twcert.org.tw/' },
+  T165: { name: '165 反詐騙諮詢專線', url: 'https://165.npa.gov.tw/' },
+  W3C: { name: 'W3C', url: 'https://www.w3.org/' },
+  MDN: { name: 'MDN Web Docs', url: 'https://developer.mozilla.org/' },
+  CERN: { name: 'CERN', url: 'https://home.cern/' },
+  IPO: { name: '經濟部智慧財產局', url: 'https://www.tipo.gov.tw/' },
+  MS: { name: 'Microsoft 支援服務', url: 'https://support.microsoft.com/' },
   CWA: { name: '中央氣象署', url: 'https://www.cwa.gov.tw/' },
 } satisfies Record<string, Source>;

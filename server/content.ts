@@ -4,8 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import type { DuelQuestion, GameConfig, MessageCard, Topic } from '../shared/types';
 import { FUNCTION_NAMES } from '../shared/types';
-import { TOPICS } from '../content/topics';
+import { TOPICS as BASE_TOPICS } from '../content/topics';
+import { TOPICS_INFO } from '../content/topics-info';
 import { DUELS } from '../content/duels';
+import { DUELS_INFO } from '../content/duels-info';
+
+const TOPICS = [...BASE_TOPICS, ...TOPICS_INFO];
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -42,7 +46,7 @@ export function flattenTopics(topics: Topic[]): MessageCard[] {
 }
 
 export function loadContent(configPath?: string): Content {
-  return { config: loadConfig(configPath), topics: TOPICS, messages: flattenTopics(TOPICS), duels: DUELS };
+  return { config: loadConfig(configPath), topics: TOPICS, messages: flattenTopics(TOPICS), duels: [...DUELS, ...DUELS_INFO] };
 }
 
 const len = (s: string) => [...s].length;
