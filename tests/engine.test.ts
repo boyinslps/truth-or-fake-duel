@@ -420,17 +420,17 @@ describe('勝負（企畫書 5.3）', () => {
     expect(s.over).toEqual({ winner: 'draw', reason: 'max_rounds' });
   });
 
-  it('連續斷線 90 秒判負；雙方都斷線則作廢', () => {
+  it('斷線超過 10 秒，對手直接獲勝；雙方都斷線則作廢', () => {
     const s = newGame(33);
     setConnected(s, 'p2', false, T0);
-    tick(s, T0 + 89_000);
+    tick(s, T0 + 9_000);
     expect(s.over).toBeNull();
-    tick(s, T0 + 90_000);
+    tick(s, T0 + 10_000);
     expect(s.over).toEqual({ winner: 'p1', reason: 'disconnect' });
     const s2 = newGame(34);
     setConnected(s2, 'p1', false, T0);
     setConnected(s2, 'p2', false, T0);
-    tick(s2, T0 + 90_000);
+    tick(s2, T0 + 10_000);
     expect(s2.over!.winner).toBe('void');
   });
 

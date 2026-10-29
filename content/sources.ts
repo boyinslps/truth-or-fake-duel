@@ -29,5 +29,12 @@ export const S = {
   CERN: { name: 'CERN', url: 'https://home.cern/' },
   IPO: { name: '經濟部智慧財產局', url: 'https://www.tipo.gov.tw/' },
   MS: { name: 'Microsoft 支援服務', url: 'https://support.microsoft.com/' },
+  HPA: { name: '衛福部國民健康署', url: 'https://www.hpa.gov.tw/' },
+  CDC: { name: '衛福部疾病管制署', url: 'https://www.cdc.gov.tw/' },
+  MOE: { name: '教育部', url: 'https://www.moe.gov.tw/' },
+  ENV: { name: '環境部', url: 'https://www.moenv.gov.tw/' },
+  NPA: { name: '內政部警政署', url: 'https://www.npa.gov.tw/' },
+  MOTC: { name: '交通部', url: 'https://www.motc.gov.tw/' },
+  MOEA: { name: '經濟部能源署', url: 'https://www.moeaea.gov.tw/' },
   CWA: { name: '中央氣象署', url: 'https://www.cwa.gov.tw/' },
 } satisfies Record<string, Source>;

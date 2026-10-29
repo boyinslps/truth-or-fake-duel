@@ -150,9 +150,10 @@ function dealByTopic(
 ): { decks: Record<PlayerId, string[]>; topicIds: string[] } {
   const byTopic = new Map<string, MessageCard[]>();
   for (const m of messages) byTopic.set(m.topic_id, [...(byTopic.get(m.topic_id) ?? []), m]);
-  const topicIds = shuffle([...byTopic.keys()], rng)
-    .sort((a, b) => Number(seen.has(a)) - Number(seen.has(b)))
-    .slice(0, count);
+  // 沒看過的議題優先；同樣沒看過的，偏向平均難度較低的（加一點隨機，仍會混入較難的）
+  const avgDifficulty = (t: string) => byTopic.get(t)!.reduce((n, m) => n + m.difficulty, 0) / byTopic.get(t)!.length;
+  const score = new Map([...byTopic.keys()].map((t) => [t, Number(seen.has(t)) * 10 + avgDifficulty(t) + rng() * 1.6]));
+  const topicIds = [...byTopic.keys()].sort((a, b) => score.get(a)! - score.get(b)!).slice(0, count);
   const pool = topicIds.flatMap((t) => byTopic.get(t)!);
   const decks: Record<PlayerId, string[]> = { p1: [], p2: [] };
   let turn: PlayerId = rng() < 0.5 ? 'p1' : 'p2';

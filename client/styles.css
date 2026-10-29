@@ -709,3 +709,9 @@ html.in-game, html.in-game body { overflow: hidden; height: 100%; }
 
 /* 署名：右下角，小而不搶眼，不擋操作 */
 .credit { position: fixed; right: 12px; bottom: 6px; z-index: 40; font-size: 12px; color: var(--ink-soft); opacity: 0.75; pointer-events: none; user-select: none; text-shadow: 0 0 6px #000; }
+
+.coach { width: min(620px, 100%); }
+.coach p.coach-body { font-size: 21px; line-height: 1.9; white-space: pre-line; margin: 10px 0 6px; }
+.coach-head { font-size: 26px; }
+.help-item p.coach-body { font-size: 15px; line-height: 1.7; }
+.help-grid { grid-template-columns: repeat(3, 1fr); }

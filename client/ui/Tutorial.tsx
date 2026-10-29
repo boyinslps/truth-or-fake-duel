@@ -19,48 +19,88 @@ export const STEPS: Step[] = [
   {
     id: 'select',
     title: '出牌',
-    body: '每回合雙方各從手牌選 1 則消息打出。你看得到自己手牌的答案（○ 是真的、× 是假的），對手看不到。挑一張，點它打出去！',
+    body: `下面是你的手牌。
+選一張綠色的「消息卡」，點一下，就打出去了。
+卡片角落的 ○ 是「真的」，× 是「假的」。只有你看得到，對手看不到喔！`,
     when: (v) => v.phase === 'select_message' && v.round === 1 && !v.me.selected,
-    delay: 700,
+    delay: 1200,
+  },
+  {
+    id: 'look',
+    title: '看對手的牌',
+    body: `兩張牌翻開了！
+上面那張是對手的消息。
+你不知道它是真的還是假的，要靠「證據」來猜。`,
+    when: (v) => v.phase === 'action' && v.round === 1 && !v.me.locked,
+    delay: 1500,
   },
   {
     id: 'verify',
     title: '查證',
-    body: '兩張牌翻開了。上方是對手的消息，你不知道它是真是假。先查證：點手牌裡黃色的「查證」卡，會公開一筆證據。',
-    when: (v) => v.phase === 'action' && v.round === 1 && !v.me.locked && (v.sharedInfo?.opponentMessage.revealed.length ?? 0) === 0,
-    delay: 600,
+    body: `點手牌裡黃色的「查證」卡，
+就會出現一個證據。
+證據會出現在上面的黃色框框裡。`,
+    when: (v) => v.phase === 'action' && v.round === 1 && !v.me.locked,
+    delay: 300,
   },
   {
     id: 'judge',
     title: '判斷',
-    body: '黃色的就是查到的證據，同一個議題的證據整局都保留。證據夠了，就選「是真的」或「是假的」；沒把握可以選「暫不判斷」，不扣分。',
+    body: `看看黃色的證據。
+你覺得對手的消息是真的還是假的？
+按下面的按鈕：是真的、是假的，或是「暫不判斷」。`,
     when: (v) => v.phase === 'action' && v.round === 1 && !v.me.locked && (v.sharedInfo?.opponentMessage.revealed.length ?? 0) > 0,
-    delay: 500,
+    delay: 1200,
+  },
+  {
+    id: 'hold',
+    title: '沒把握怎麼辦？',
+    body: `還不確定的時候，可以選「暫不判斷」。
+這樣不加分，也不扣分。
+不確定就先不要相信，也不要亂轉傳！`,
+    when: (v) => v.phase === 'action' && v.round === 1 && !v.me.locked && (v.sharedInfo?.opponentMessage.revealed.length ?? 0) > 0,
+    delay: 300,
   },
   {
     id: 'result',
-    title: '結算',
-    body: '判斷正確 +1、判斷錯誤 −1、暫不判斷 0。做出判斷會抽到 1 張實用卡。看看下面的解釋，學到為什麼是真或假，再按「繼續」。',
+    title: '算分',
+    body: `判斷對了，加 1 分。
+判斷錯了，扣 1 分。
+選「暫不判斷」，0 分。
+看一看下面的說明，知道為什麼，再按「繼續」。`,
     when: (v) => v.phase === 'round_result' && v.round === 1,
-    delay: 3300,
+    delay: 3800,
+  },
+  {
+    id: 'draw',
+    title: '抽新卡',
+    body: `做出判斷之後，你會抽到一張新的卡。
+新卡會從右邊的牌堆飛進你的手牌！`,
+    when: (v) => v.phase === 'round_result' && v.round === 1,
+    delay: 300,
   },
   {
     id: 'cards',
     title: '功能卡',
-    body: '功能卡能改變這回合：「加倍」得失分 ×2、「保守」答錯不扣分、「事先調查」偷看對手的手牌。滑鼠指到手牌就會顯示說明。這回合試著用一張再判斷吧！',
+    body: `紫色的是「功能卡」，很好用：
+「加倍」＝分數變兩倍
+「保守」＝答錯不扣分
+把滑鼠移到卡片上，就會看到說明。這一回合，試試看用一張吧！`,
     when: (v) => v.phase === 'action' && v.round === 2 && !v.me.locked,
-    delay: 600,
+    delay: 1500,
   },
   {
     id: 'finish',
-    title: '開始對戰',
-    body: '正式比賽先得到 7 分的人獲勝；如果雙方都到了 7 分，之後誰先領先誰就贏，最多 12 回合。教學不計牌位，準備好就回首頁按「開始對戰」！',
+    title: '教學完成！',
+    body: `你學會了！
+正式比賽是誰先得 7 分，誰就贏。
+準備好了，就回首頁按「開始對戰」！`,
     when: (v) => v.phase === 'game_over' && v.gameOver?.reason !== 'forfeit',
-    delay: 800,
+    delay: 1200,
   },
 ];
 
-/** 教學對局的引導視窗：一次一個步驟，按「知道了」才繼續。 */
+/** 教學對局的引導視窗：一次一個步驟，按「下一步」才繼續。 */
 export function Coach({ view }: { view: PlayerView }) {
   const [seen, setSeen] = useState<string[]>([]);
   const step = view.tutorial ? STEPS.find((s) => !seen.includes(s.id) && s.when(view)) : undefined;
@@ -82,7 +122,7 @@ export function Coach({ view }: { view: PlayerView }) {
           <span className="coach-step">教學 {n}/{STEPS.length}</span>
           <strong>{step.title}</strong>
         </div>
-        <p>{step.body}</p>
+        <p className="coach-body">{step.body}</p>
         <div className="row end">
           {view.phase !== 'game_over' && (
             <button className="btn ghost small" onClick={() => actions.leaveGame()}>
@@ -90,7 +130,7 @@ export function Coach({ view }: { view: PlayerView }) {
             </button>
           )}
           <button className="btn primary" onClick={() => setSeen((x) => [...x, step.id])}>
-            知道了
+            下一步
           </button>
         </div>
       </div>
@@ -111,7 +151,7 @@ export function HelpModal() {
             <h4>
               <span className="coach-step">{i + 1}</span> {s.title}
             </h4>
-            <p>{s.body}</p>
+            <p className="coach-body">{s.body}</p>
           </section>
         ))}
       </div>

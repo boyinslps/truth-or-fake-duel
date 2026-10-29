@@ -150,7 +150,7 @@ function Hud({ view }: { view: PlayerView }) {
       <div className="a11y-only">
         <TimerRing deadline={view.phase === 'duel' ? null : view.deadline} total={PHASE_TOTAL(view)} size={44} />
       </div>
-      {!view.opponent.connected && <div className="hud-offline">對手斷線</div>}
+      {!view.opponent.connected && <div className="hud-offline">對手斷線，馬上就判你獲勝</div>}
     </div>
   );
 }

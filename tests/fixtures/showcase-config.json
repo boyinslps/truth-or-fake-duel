@@ -31,7 +31,7 @@
     "round_result": 90,
     "match_confirm": 30
   },
-  "disconnect_forfeit_sec": 90,
+  "disconnect_forfeit_sec": 10,
   "approved_icons": [
     "sun",
     "moon",
