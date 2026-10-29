@@ -715,3 +715,6 @@ html.in-game, html.in-game body { overflow: hidden; height: 100%; }
 .coach-head { font-size: 26px; }
 .help-item p.coach-body { font-size: 15px; line-height: 1.7; }
 .help-grid { grid-template-columns: repeat(3, 1fr); }
+
+.opp-who { font-size: 18px; margin: -8px 0 14px; }
+.lb-who { color: var(--ink-soft); white-space: nowrap; font-size: 13px; }

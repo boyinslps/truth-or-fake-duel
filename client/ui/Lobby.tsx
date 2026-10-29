@@ -219,6 +219,7 @@ export function MatchFound() {
         <p className="versus">
           <span className="me-color">你</span> vs <span className="opp-color">{match.opponentNickname}</span>
         </p>
+        {match.opponentWho && <p className="muted opp-who">{match.opponentWho}</p>}
         {match.ready ? (
           <p className="tagline">等待對手準備…</p>
         ) : (

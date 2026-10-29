@@ -264,7 +264,9 @@ describe('登入、牌位、排行榜', () => {
     expect(lb.rows.some((r: any) => r.me)).toBe(true);
     const text = JSON.stringify(lb);
     expect(text).not.toContain('測試學生');
-    expect(text).not.toMatch(/"(name|seat|classNo|grade)"/);
+    // 排行榜顯示暱稱與班級座號，但不含真實姓名
+    expect(text).not.toMatch(/"name"/);
+    expect(lb.rows.some((r: any) => /^\d 年 \d+ 班 \d+ 號$/.test(r.who))).toBe(true);
     a.socket.close();
     b.socket.close();
   });
@@ -323,6 +325,8 @@ describe('電腦玩家', () => {
     a.socket.emit('queue_join');
     await waitFor(() => a.last?.phase === 'game_over', 90_000);
     expect(found.opponentNickname).toBeTruthy();
+    // 配對時看得到對方的班級座號；電腦玩家也有，看起來和同學一樣
+    expect(found.opponentWho).toMatch(/^\d 年 \d+ 班 \d+ 號$/);
     expect(a.last!.opponent.nickname).toBe(found.opponentNickname);
     for (const v of a.snapshots) {
       expect(v.opponent.connected).toBe(true);

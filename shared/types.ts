@@ -266,6 +266,8 @@ export interface ProfileView {
 export interface LeaderboardRow {
   rank: number;
   nickname: string;
+  /** 班級座號，例如「5 年 3 班 7 號」。 */
+  who: string;
   points: number;
   wins: number;
   games: number;

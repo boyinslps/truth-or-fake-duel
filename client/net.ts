@@ -45,7 +45,7 @@ export interface NetState {
   /** 剛結束那一局的積分變化。 */
   rankChange: RankChange | null;
   matching: { since: number } | null;
-  match: { matchId: string; opponentNickname: string; deadline: number; ready: boolean } | null;
+  match: { matchId: string; opponentNickname: string; opponentWho: string; deadline: number; ready: boolean } | null;
   cancelled: string | null;
   view: PlayerView | null;
   clockOffset: number;
@@ -152,9 +152,9 @@ socket.on('leaderboard', (l: LeaderboardView) => set({ leaderboard: l }));
 socket.on('rank_update', (r: RankChange) => set({ rankChange: r }));
 socket.on('feedback_result', (r: { ok: boolean; message?: string }) => set({ feedbackResult: r }));
 socket.on('matchmaking_started', () => set({ matching: { since: Date.now() }, cancelled: null }));
-socket.on('match_found', (m: { matchId: string; opponentNickname: string; deadline: number; serverNow: number }) =>
+socket.on('match_found', (m: { matchId: string; opponentNickname: string; opponentWho: string; deadline: number; serverNow: number }) =>
   set({
-    match: { matchId: m.matchId, opponentNickname: m.opponentNickname, deadline: m.deadline, ready: false },
+    match: { matchId: m.matchId, opponentNickname: m.opponentNickname, opponentWho: m.opponentWho, deadline: m.deadline, ready: false },
     clockOffset: m.serverNow - Date.now(),
   }),
 );

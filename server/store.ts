@@ -172,6 +172,7 @@ export class Store {
     const row = (a: Account, i: number): LeaderboardRow => ({
       rank: i + 1,
       nickname: a.nickname,
+      who: whoOf(a),
       points: a.points,
       wins: a.wins,
       games: a.games,
@@ -181,6 +182,11 @@ export class Store {
     const myIndex = pool.findIndex((a) => a.id === me.id);
     return { scope, rows, mine: myIndex >= LEADERBOARD_SIZE ? row(me, myIndex) : null };
   }
+}
+
+/** 顯示用的班級座號（不含姓名）；教學小幫手沒有班級。 */
+export function whoOf(a: Account): string {
+  return a.coach || !a.grade ? '' : `${a.grade} 年 ${a.classNo} 班 ${a.seat} 號`;
 }
 
 export function profileOf(a: Account): ProfileView {

@@ -10,7 +10,7 @@ import type { Choice, FunctionName, PlayerId, RankChange } from '../shared/types
 import { applyOutcome, tierOf, type Outcome } from '../shared/rank';
 import type { Content } from './content';
 import { applyAction, createGame, setConnected, tick, view, type Action, type GameState } from './engine';
-import { checkLogin, checkNickname, checkSeat, profileOf, Store, type Account } from './store';
+import { checkLogin, checkNickname, checkSeat, profileOf, Store, whoOf, type Account } from './store';
 import { BotBrain, ensureBots, pickBot, skillFor } from './bot';
 
 const COLORS = ['藍色', '紅色', '綠色', '黃色', '紫色', '橘色', '白色', '銀色', '金色', '粉紅'];
@@ -217,6 +217,7 @@ export function createApp(opts: AppOptions): App {
       socketOf(me)?.emit('match_found', {
         matchId: m.id,
         opponentNickname: nicknameOf(opp),
+        opponentWho: whoOf(accountOf(sessions.get(opp)) ?? ({} as Account)),
         deadline: m.deadline,
         serverNow: now(),
       });

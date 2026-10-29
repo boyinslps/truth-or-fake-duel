@@ -86,6 +86,7 @@ export function Leaderboard() {
                 <thead>
                   <tr>
                     <th>#</th>
+                    <th>班級座號</th>
                     <th>暱稱</th>
                     <th>牌位</th>
                     <th>積分</th>
@@ -98,6 +99,7 @@ export function Leaderboard() {
                       <td className="lb-rank">
                         {r.rank <= 3 ? <Icon name="trophy" size={16} color={['#FFD60A', '#C8D6CE', '#FF9F43'][r.rank - 1]} /> : r.rank}
                       </td>
+                      <td className="lb-who">{r.who}</td>
                       <td>{r.nickname}</td>
                       <td>
                         <TierBadge points={r.points} />

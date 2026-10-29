@@ -15,6 +15,15 @@ const BOT_COUNT = 24;
 
 /** 確保有足夠的電腦玩家帳號；積分分散在前幾個牌位，戰績看起來像打過一陣子。 */
 export function ensureBots(store: Store, now: number, rng: Rng) {
+  // 舊資料的電腦玩家沒有班級座號：補上，免得配對時露出破綻
+  for (const a of store.all()) {
+    if (a.bot && !a.coach && !a.grade) {
+      a.grade = 3 + Math.floor(rng() * 4);
+      a.classNo = 1 + Math.floor(rng() * 10);
+      a.seat = 1 + Math.floor(rng() * 28);
+      store.changed();
+    }
+  }
   const have = store.all().filter((a) => a.bot && !a.coach).length;
   const names = BOT_NICKNAMES.filter((n) => !store.nicknameTaken(n));
   for (let i = have; i < BOT_COUNT && names.length; i++) {
@@ -26,7 +35,7 @@ export function ensureBots(store: Store, now: number, rng: Rng) {
     const judged = games * 8;
     store.create(
       {
-        grade: 0, classNo: 0, seat: 0, name: '', nickname, bot: true,
+        grade: 3 + Math.floor(rng() * 4), classNo: 1 + Math.floor(rng() * 10), seat: 1 + Math.floor(rng() * 28), name: '', nickname, bot: true,
         points, wins, losses, games, judged, correct: Math.round(judged * (0.55 + rng() * 0.25)),
         createdAt: now - Math.floor(rng() * 30 * 86_400_000),
       },
