@@ -325,8 +325,8 @@ describe('電腦玩家', () => {
     a.socket.emit('queue_join');
     await waitFor(() => a.last?.phase === 'game_over', 90_000);
     expect(found.opponentNickname).toBeTruthy();
-    // 配對時看得到對方的班級座號；電腦玩家也有，看起來和同學一樣
-    expect(found.opponentWho).toMatch(/^\d 年 \d+ 班 \d+ 號$/);
+    // 真人對手會顯示班級座號；電腦玩家沒有班級座號，不顯示
+    expect(found.opponentWho).toBe('');
     expect(a.last!.opponent.nickname).toBe(found.opponentNickname);
     for (const v of a.snapshots) {
       expect(v.opponent.connected).toBe(true);

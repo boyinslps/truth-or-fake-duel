@@ -184,9 +184,9 @@ export class Store {
   }
 }
 
-/** 顯示用的班級座號（不含姓名）；教學小幫手沒有班級。 */
+/** 顯示用的班級座號（不含姓名）；電腦玩家和教學小幫手沒有班級座號。 */
 export function whoOf(a: Account): string {
-  return a.coach || !a.grade ? '' : `${a.grade} 年 ${a.classNo} 班 ${a.seat} 號`;
+  return a.bot || !a.grade ? '' :`${a.grade} 年 ${a.classNo} 班 ${a.seat} 號`;
 }
 
 export function profileOf(a: Account): ProfileView {
