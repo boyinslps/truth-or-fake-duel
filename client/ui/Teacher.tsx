@@ -50,6 +50,7 @@ export function Teacher() {
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showBots, setShowBots] = useState(false);
+  const [sortBy, setSortBy] = useState<'record' | 'seat'>('record');
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/teacher/overview');
@@ -79,9 +80,12 @@ export function Teacher() {
   }
   if (!data) return null;
 
+  const bySeat = (x: Row, y: Row) => x.grade - y.grade || x.classNo - y.classNo || x.seat - y.seat;
+  // 戰績排序和學生看到的排行榜同一套規則：積分高、勝場多、場數少的在前
+  const byRecord = (x: Row, y: Row) => y.points - x.points || y.wins - x.wins || x.games - y.games || bySeat(x, y);
   const students = data.accounts
     .filter((a) => showBots || !a.bot)
-    .sort((x, y) => Number(x.bot) - Number(y.bot) || x.grade - y.grade || x.classNo - y.classNo || x.seat - y.seat);
+    .sort((x, y) => Number(x.bot) - Number(y.bot) || (sortBy === 'record' ? byRecord(x, y) : bySeat(x, y)));
 
   return (
     <main className="teacher">
@@ -98,9 +102,17 @@ export function Teacher() {
       <label className="teacher-toggle">
         <input type="checkbox" checked={showBots} onChange={(e) => setShowBots(e.target.checked)} /> 顯示電腦玩家（學生看不到這個標記）
       </label>
+      <label className="teacher-toggle">
+        排序{' '}
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'record' | 'seat')}>
+          <option value="record">依戰績（積分、勝場）</option>
+          <option value="seat">依班級座號</option>
+        </select>
+      </label>
       <table className="summary teacher-table">
         <thead>
           <tr>
+            {sortBy === 'record' && <th>名次</th>}
             <th>班級</th>
             <th>座號</th>
             <th>姓名</th>
@@ -113,8 +125,9 @@ export function Teacher() {
           </tr>
         </thead>
         <tbody>
-          {students.map((a) => (
+          {students.map((a, i) => (
             <tr key={a.id} className={a.bot ? 'bot-row' : ''}>
+              {sortBy === 'record' && <td className="num">{a.bot ? '' : i + 1}</td>}
               <td>{a.bot ? <em className="tag fn">電腦</em> : `${a.grade} 年 ${a.classNo} 班`}</td>
               <td className="num">{a.bot ? '' : a.seat}</td>
               <td>

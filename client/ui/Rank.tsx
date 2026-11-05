@@ -1,6 +1,6 @@
 // 牌位徽章、升級進度、積分變化與排行榜（企畫書第 18 節）。
 import type { CSSProperties } from 'react';
-import type { RankChange } from '../../shared/types';
+import type { LeaderboardRow, RankChange } from '../../shared/types';
 import { nextTier, tierOf } from '../../shared/rank';
 import { actions, useNet } from '../net';
 import { Icon } from './Icon';
@@ -47,16 +47,52 @@ export function RankChangeView({ change }: { change: RankChange }) {
   );
 }
 
+const MEDAL = ['#FFD60A', '#C8D6CE', '#FF9F43'];
+
+/** 前三名：特別大的卡片，第一名最大。 */
+function TopCard({ r }: { r: LeaderboardRow }) {
+  const medal = MEDAL[r.rank - 1];
+  return (
+    <div className={`lb-top p${r.rank}${r.me ? ' me' : ''}`} style={{ '--medal': medal } as CSSProperties}>
+      <Icon name="trophy" size={r.rank === 1 ? 52 : 38} color={medal} />
+      <div className="lb-top-main">
+        <span className="lb-top-rank">第 {r.rank} 名</span>
+        <span className="lb-top-nick">{r.nickname}</span>
+        {r.who && <span className="lb-who">{r.who}</span>}
+        <TierBadge points={r.points} />
+      </div>
+      <div className="lb-top-score">
+        <b>{r.points}</b>
+        <span>分</span>
+        <small>{r.wins} 勝</small>
+      </div>
+    </div>
+  );
+}
+
+function ListRow({ r }: { r: LeaderboardRow }) {
+  return (
+    <li className={'lb-row' + (r.me ? ' me' : '')}>
+      <span className="lb-rank">{r.rank}</span>
+      <span className="lb-name">
+        <b>{r.nickname}</b>
+        {r.who && <small className="lb-who">{r.who}</small>}
+      </span>
+      <TierBadge points={r.points} />
+      <span className="lb-pts">{r.points}</span>
+    </li>
+  );
+}
+
 export function Leaderboard() {
   const { leaderboard, profile } = useNet();
   const scope = leaderboard?.scope ?? 'all';
-  const rows = leaderboard ? [...leaderboard.rows, ...(leaderboard.mine ? [leaderboard.mine] : [])] : [];
-  // 超過 10 人就分左右兩欄，一頁看完不用捲動
-  const split = rows.length > 10;
-  const cols = split ? [rows.slice(0, Math.ceil(rows.length / 2)), rows.slice(Math.ceil(rows.length / 2))] : [rows];
+  const top = leaderboard ? leaderboard.rows.slice(0, 3) : [];
+  const rest = leaderboard ? leaderboard.rows.slice(3) : [];
+  const mine = leaderboard?.mine ?? null;
   return (
     <main className="lobby">
-      <div className={'lobby-card board-card' + (split ? ' wide' : '')}>
+      <div className="lobby-card board-card">
         <div className="lb-head">
           <h2>
             <Icon name="trophy" color="var(--verify)" /> 排行榜
@@ -77,41 +113,31 @@ export function Leaderboard() {
         </div>
         {!leaderboard ? (
           <p className="muted">載入中…</p>
-        ) : rows.length === 0 ? (
+        ) : leaderboard.rows.length === 0 ? (
           <p className="muted">還沒有人上榜</p>
         ) : (
-          <div className={'lb-cols' + (split ? ' two' : '')}>
-            {cols.map((part, ci) => (
-              <table key={ci} className="summary lb-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>班級座號</th>
-                    <th>暱稱</th>
-                    <th>牌位</th>
-                    <th>積分</th>
-                    <th>勝場</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {part.map((r) => (
-                    <tr key={r.rank + '-' + r.nickname} className={r.me ? 'me-row' : ''}>
-                      <td className="lb-rank">
-                        {r.rank <= 3 ? <Icon name="trophy" size={16} color={['#FFD60A', '#C8D6CE', '#FF9F43'][r.rank - 1]} /> : r.rank}
-                      </td>
-                      <td className="lb-who">{r.who}</td>
-                      <td>{r.nickname}</td>
-                      <td>
-                        <TierBadge points={r.points} />
-                      </td>
-                      <td className="num">{r.points}</td>
-                      <td className="num">{r.wins}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ))}
-          </div>
+          <>
+            <div className="lb-podium">
+              {top.map((r) => (
+                <TopCard key={r.rank} r={r} />
+              ))}
+            </div>
+            {rest.length > 0 && (
+              <ol className="lb-list" aria-label="第 4 名以後">
+                {rest.map((r) => (
+                  <ListRow key={r.rank} r={r} />
+                ))}
+              </ol>
+            )}
+            {mine && (
+              <div className="lb-mine">
+                <span className="muted">你的名次</span>
+                <ol className="lb-list pinned">
+                  <ListRow r={mine} />
+                </ol>
+              </div>
+            )}
+          </>
         )}
         <div className="row">
           <button className="btn" onClick={actions.closeLeaderboard}>

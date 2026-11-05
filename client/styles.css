@@ -718,3 +718,31 @@ html.in-game, html.in-game body { overflow: hidden; height: 100%; }
 
 .opp-who { font-size: 18px; margin: -8px 0 14px; }
 .lb-who { color: var(--ink-soft); white-space: nowrap; font-size: 13px; }
+
+/* ───── 排行榜：前三名大卡片 + 往下捲動的名次清單 ───── */
+.lb-podium { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 12px; }
+.lb-top { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--card); border: 2px solid var(--medal); border-radius: 16px; box-shadow: 0 0 14px color-mix(in srgb, var(--medal) 35%, transparent); min-width: 0; }
+.lb-top.p1 { grid-column: 1 / -1; padding: 18px 20px; gap: 18px; background: var(--card-2); }
+.lb-top.me { outline: 2px solid var(--me); outline-offset: 2px; }
+.lb-top-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.lb-top-rank { font-size: 13px; color: var(--medal); font-weight: 700; }
+.lb-top-nick { font-size: 22px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.lb-top.p1 .lb-top-nick { font-size: 34px; }
+.lb-top-score { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.lb-top-score b { font-family: var(--mono); font-size: 28px; color: var(--medal); }
+.lb-top.p1 .lb-top-score b { font-size: 44px; }
+.lb-top-score span, .lb-top-score small { font-size: 13px; color: var(--ink-soft); }
+.lb-list { list-style: none; margin: 0 0 10px; padding: 0 4px 0 0; display: grid; gap: 6px; max-height: max(160px, calc(100vh - 560px)); overflow-y: auto; overscroll-behavior: contain; }
+.lb-list.pinned { max-height: none; overflow: visible; margin: 4px 0 10px; }
+.lb-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto 56px; align-items: center; gap: 10px; padding: 8px 12px; background: var(--card); border: 1px solid var(--grid); border-radius: 12px; }
+.lb-row.me { background: rgba(0, 255, 102, 0.12); border-color: var(--me); }
+.lb-row .lb-rank { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--ink-soft); text-align: center; width: auto; }
+.lb-name { display: flex; flex-direction: column; min-width: 0; }
+.lb-name b { font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
+.lb-pts { font-family: var(--mono); font-size: 18px; font-weight: 700; text-align: right; }
+.lb-mine { border-top: 1px dashed var(--grid); padding-top: 8px; }
+@media (max-width: 440px) {
+  .lb-podium { grid-template-columns: 1fr; }
+  .lb-row { grid-template-columns: 32px minmax(0, 1fr) 52px; }
+  .lb-row .tier-badge { display: none; }
+}
