@@ -182,7 +182,9 @@ flowchart LR
 
 ## 快速開始
 
-需要 [Node.js](https://nodejs.org) 22 以上。
+**老師上課用（Windows，免安裝）**：到 [Releases](https://github.com/boyinslps/truth-or-fake-duel/releases/latest) 下載 `zhenjia-duel-class-windows.zip`（約 47 MB，內含 Node.js 和建好的畫面），解壓縮後雙擊 `start-class.bat` 即可，不用安裝任何東西。GitHub 頁面上的 Source code (zip) 只有原始碼，不能直接執行。
+
+**開發者**：需要 [Node.js](https://nodejs.org) 22 以上。
 
 ```bash
 git clone https://github.com/boyinslps/truth-or-fake-duel.git
