@@ -25,5 +25,8 @@ if not exist dist\index.html (
   if errorlevel 1 ( pause & exit /b 1 )
 )
 
+rem Quick update check (needs internet; skips silently if offline). Only prints a hint, never changes files.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update.ps1" -CheckOnly -Quiet
+
 call npm start
 pause

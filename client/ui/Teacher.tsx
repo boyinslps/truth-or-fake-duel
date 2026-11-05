@@ -19,6 +19,9 @@ interface Row {
   games: number;
   accuracy: number | null;
   online: boolean;
+  lessonWins: number;
+  lessonGames: number;
+  lessonPoints: number;
 }
 
 interface FeedbackRow {
@@ -36,9 +39,12 @@ interface Overview {
   urls: string[];
   online: number;
   playing: number;
+  lessonStartedAt: number;
   accounts: Row[];
   feedback: FeedbackRow[];
 }
+
+type SortKey = 'record' | 'lesson' | 'seat';
 
 async function post(path: string, body?: unknown) {
   const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) });
@@ -50,7 +56,8 @@ export function Teacher() {
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showBots, setShowBots] = useState(false);
-  const [sortBy, setSortBy] = useState<'record' | 'seat'>('record');
+  const [sortBy, setSortBy] = useState<SortKey>('record');
+  const [classFilter, setClassFilter] = useState('all');
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/teacher/overview');
@@ -83,9 +90,21 @@ export function Teacher() {
   const bySeat = (x: Row, y: Row) => x.grade - y.grade || x.classNo - y.classNo || x.seat - y.seat;
   // 戰績排序和學生看到的排行榜同一套規則：積分高、勝場多、場數少的在前
   const byRecord = (x: Row, y: Row) => y.points - x.points || y.wins - x.wins || x.games - y.games || bySeat(x, y);
+  // 本節排序：這一節課勝場多、積分增加多的在前，平手再看累積戰績
+  const byLesson = (x: Row, y: Row) => y.lessonWins - x.lessonWins || y.lessonPoints - x.lessonPoints || x.lessonGames - y.lessonGames || byRecord(x, y);
+  const classKey = (a: Row) => `${a.grade}-${a.classNo}`;
+  const classes = [...new Set(data.accounts.filter((a) => !a.bot).map(classKey))].sort((p, q) => {
+    const [pg, pc] = p.split('-').map(Number);
+    const [qg, qc] = q.split('-').map(Number);
+    return pg - qg || pc - qc;
+  });
+  const sorter = sortBy === 'record' ? byRecord : sortBy === 'lesson' ? byLesson : bySeat;
   const students = data.accounts
-    .filter((a) => showBots || !a.bot)
-    .sort((x, y) => Number(x.bot) - Number(y.bot) || (sortBy === 'record' ? byRecord(x, y) : bySeat(x, y)));
+    .filter((a) => (showBots && classFilter === 'all') || !a.bot)
+    .filter((a) => classFilter === 'all' || classKey(a) === classFilter)
+    .sort((x, y) => Number(x.bot) - Number(y.bot) || sorter(x, y));
+  const lessonSince = new Date(data.lessonStartedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  const showRank = sortBy !== 'seat';
 
   return (
     <main className="teacher">
@@ -128,23 +147,51 @@ export function Teacher() {
           刪除全部學生帳號
         </button>
       </div>
-      <label className="teacher-toggle">
-        排序{' '}
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'record' | 'seat')}>
-          <option value="record">依戰績（積分、勝場）</option>
-          <option value="seat">依班級座號</option>
-        </select>
-      </label>
+      <div className="teacher-bulk">
+        <label className="teacher-toggle">
+          班級{' '}
+          <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
+            <option value="all">全部</option>
+            {classes.map((c) => (
+              <option key={c} value={c}>
+                {c.split('-')[0]} 年 {c.split('-')[1]} 班
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="teacher-toggle">
+          排序{' '}
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)}>
+            <option value="record">依戰績（積分、勝場）</option>
+            <option value="lesson">依本節勝場</option>
+            <option value="seat">依班級座號</option>
+          </select>
+        </label>
+        <button
+          className="btn small"
+          title="只把「本節勝場」歸零，累積的積分和戰績不動"
+          onClick={async () => {
+            if (confirm('開始新的一節課？\n「本節勝場」會歸零，累積的積分和戰績不受影響。')) {
+              await post('/api/teacher/lesson/new');
+              load();
+            }
+          }}
+        >
+          開始新的一節課
+        </button>
+        <span className="muted">本節從 {lessonSince} 開始計算</span>
+      </div>
       <table className="summary teacher-table">
         <thead>
           <tr>
-            {sortBy === 'record' && <th>名次</th>}
+            {showRank && <th>名次</th>}
             <th>班級</th>
             <th>座號</th>
             <th>姓名</th>
             <th>暱稱</th>
             <th>牌位</th>
             <th>積分</th>
+            <th>本節勝場</th>
             <th>勝／敗／和</th>
             <th>判斷正確</th>
             <th />
@@ -153,7 +200,7 @@ export function Teacher() {
         <tbody>
           {students.map((a, i) => (
             <tr key={a.id} className={a.bot ? 'bot-row' : ''}>
-              {sortBy === 'record' && <td className="num">{a.bot ? '' : i + 1}</td>}
+              {showRank && <td className="num">{a.bot ? '' : i + 1}</td>}
               <td>{a.bot ? <em className="tag fn">電腦</em> : `${a.grade} 年 ${a.classNo} 班`}</td>
               <td className="num">{a.bot ? '' : a.seat}</td>
               <td>
@@ -165,6 +212,10 @@ export function Teacher() {
                 <TierBadge points={a.points} />
               </td>
               <td className="num">{a.points}</td>
+              <td className="num" title={`本節 ${a.lessonGames} 場，積分 ${a.lessonPoints >= 0 ? '+' : ''}${a.lessonPoints}`}>
+                {a.bot ? '' : <b>{a.lessonWins}</b>}
+                {!a.bot && <span className="muted">／{a.lessonGames} 場</span>}
+              </td>
               <td className="num">
                 {a.wins}／{a.losses}／{a.draws}
               </td>

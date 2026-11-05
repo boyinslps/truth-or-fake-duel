@@ -97,6 +97,14 @@ export function createApp(opts: AppOptions): App {
   const flushed = new Map<string, number>();
   const finishedAt = new Map<string, number>();
   const settled = new Set<string>();
+  /** 「本節課」統計：老師按「開始新的一節課」就歸零，只記真人學生這一節的勝場、場數、積分變化。 */
+  const lesson = new Map<string, { wins: number; games: number; points: number }>();
+  let lessonStartedAt = now();
+  const lessonOf = (id: string) => {
+    let l = lesson.get(id);
+    if (!l) lesson.set(id, (l = { wins: 0, games: 0, points: 0 }));
+    return l;
+  };
   /** 教學對局的 id：不計牌位，結束時記下這位學生看過教學了。 */
   const tutorialGames = new Set<string>();
 
@@ -157,6 +165,12 @@ export function createApp(opts: AppOptions): App {
           acc.judged++;
           if (e.base > 0) acc.correct++;
         }
+      }
+      if (!acc.bot) {
+        const l = lessonOf(acc.id);
+        l.games++;
+        if (outcome === 'win') l.wins++;
+        l.points += acc.points - before;
       }
       if (!acc.bot) acc.seenTopics = [...acc.seenTopics.filter((t) => !game.topicIds.includes(t)), ...game.topicIds].slice(-300);
       store.changed();
@@ -317,6 +331,7 @@ export function createApp(opts: AppOptions): App {
       urls: lanUrls(listeningPort),
       online: online.size,
       playing,
+      lessonStartedAt,
       feedback: store.feedbackAll(),
       accounts: store.all().map((a) => ({
         id: a.id,
@@ -335,6 +350,9 @@ export function createApp(opts: AppOptions): App {
         accuracy: a.judged ? a.correct / a.judged : null,
         online: online.has(a.id),
         lastSeen: a.lastSeen,
+        lessonWins: lesson.get(a.id)?.wins ?? 0,
+        lessonGames: lesson.get(a.id)?.games ?? 0,
+        lessonPoints: lesson.get(a.id)?.points ?? 0,
       })),
     });
   });
@@ -359,6 +377,7 @@ export function createApp(opts: AppOptions): App {
   app.post('/api/teacher/accounts/:id/delete', (req, res) => {
     const id = String(req.params.id);
     if (!store.remove(id)) return void res.status(404).json({ error: '找不到這個帳號' });
+    lesson.delete(id);
     for (const s of sessions.values()) {
       if (s.accountId !== id) continue;
       removeFromQueue(s.token);
@@ -367,10 +386,18 @@ export function createApp(opts: AppOptions): App {
     }
     res.json({ ok: true });
   });
+  // 開始新的一節課：只把「本節」統計歸零，累積的積分與戰績不動。
+  app.post('/api/teacher/lesson/new', (_req, res) => {
+    lesson.clear();
+    lessonStartedAt = now();
+    res.json({ ok: true, lessonStartedAt });
+  });
   // 重設排行榜：積分、勝敗歸零（保留帳號與暱稱）。需要 body.confirm === true，避免誤觸。
   app.post('/api/teacher/reset-scores', (req, res) => {
     if (req.body?.confirm !== true) return void res.status(400).json({ error: '需要確認' });
     const list = store.resetScores();
+    lesson.clear();
+    lessonStartedAt = now();
     const ids = new Set(list.map((a) => a.id));
     for (const s of sessions.values()) {
       const acc = s.accountId && ids.has(s.accountId) ? store.get(s.accountId) : undefined;
@@ -382,6 +409,7 @@ export function createApp(opts: AppOptions): App {
   app.post('/api/teacher/students/delete-all', (req, res) => {
     if (req.body?.confirm !== true) return void res.status(400).json({ error: '需要確認' });
     const ids = new Set(store.removeAllStudents());
+    lesson.clear();
     for (const s of sessions.values()) {
       if (!s.accountId || !ids.has(s.accountId)) continue;
       removeFromQueue(s.token);

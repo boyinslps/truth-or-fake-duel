@@ -116,6 +116,15 @@ describe('端對端對局', () => {
     expect(a.last!.me.score).toBe(b.last!.opponent.score);
     expect(a.last!.history.length).toBeGreaterThanOrEqual(1);
 
+    // 老師頁的「本節」統計：兩人各打一場，勝場合計 1（平手為 0）；開始新的一節課後歸零
+    const overview = async () => (await (await fetch(`${url}/api/teacher/overview`)).json()) as { accounts: { nickname: string; lessonWins: number; lessonGames: number }[] };
+    const mine = (o: Awaited<ReturnType<typeof overview>>) => o.accounts.filter((x) => [a.last!.me.nickname, b.last!.me.nickname].includes(x.nickname));
+    const before = mine(await overview());
+    expect(before.map((x) => x.lessonGames)).toEqual([1, 1]);
+    expect(before.reduce((n, x) => n + x.lessonWins, 0)).toBe(a.last!.gameOver!.winner === 'draw' ? 0 : 1);
+    expect((await fetch(`${url}/api/teacher/lesson/new`, { method: 'POST' })).status).toBe(200);
+    expect(mine(await overview()).map((x) => [x.lessonWins, x.lessonGames])).toEqual([[0, 0], [0, 0]]);
+
     // 在回合結算之前，對手的消息都不能帶答案或未公開的資訊內容
     for (const bot of [a, b]) {
       for (const v of bot.snapshots) {
