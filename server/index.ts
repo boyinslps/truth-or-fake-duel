@@ -28,6 +28,7 @@ const dataFile = (dataArg > 0 ? process.argv[dataArg + 1] : process.env.ZJ_DATA)
 
 const app = createApp({ content, staticDir: join(here, '..', 'dist'), dataFile });
 const actual = await app.listen(port);
+if (actual !== port) console.log(`注意：連接埠 ${port} 被佔用，這次改用 ${actual}。請讓學生用下面印出的網址（含 :${actual}）。`);
 console.log(`真假對決伺服器已啟動：http://localhost:${actual}`);
 console.log(`題庫：${content.messages.length} 張消息卡、${content.duels.length} 題直接對決題`);
 console.log(`帳號資料：${dataFile}`);

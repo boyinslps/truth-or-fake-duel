@@ -621,13 +621,28 @@ export function createApp(opts: AppOptions): App {
     io,
     games,
     store,
+    // 連接埠被別的程式佔用時，依序改試下一個（最多往後 20 個），讓課堂不會因此打不開。
+    // 指定 0（讓系統挑）時不重試。實際用到的連接埠由回傳值告知。
     listen: (port) =>
-      new Promise((resolve) => {
-        http.listen(port, () => {
-          const addr = http.address();
-          listeningPort = typeof addr === 'object' && addr ? addr.port : port;
-          resolve(listeningPort);
-        });
+      new Promise((resolve, reject) => {
+        const attempt = (p: number, left: number) => {
+          const onError = (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE' && port !== 0 && left > 0) {
+              console.warn(`連接埠 ${p} 已被其他程式使用，改試 ${p + 1}……`);
+              attempt(p + 1, left - 1);
+            } else {
+              reject(err);
+            }
+          };
+          http.once('error', onError);
+          http.listen(p, () => {
+            http.off('error', onError);
+            const addr = http.address();
+            listeningPort = typeof addr === 'object' && addr ? addr.port : p;
+            resolve(listeningPort);
+          });
+        };
+        attempt(port, 20);
       }),
     close: () =>
       new Promise((resolve) => {
