@@ -77,7 +77,7 @@ try {
     $lockAfter = if (Test-Path $lock) { (Get-FileHash $lock).Hash } else { '' }
 
     Write-Host '更新完成。請關掉伺服器視窗，再重新開啟 start-class.bat。'
-    if ($lockBefore -ne $lockAfter) {
+    if ($lockBefore -and $lockBefore -ne $lockAfter) {
         Write-Host '注意：這次更新有新增或升級套件，免安裝版內附的套件可能不夠用。如果伺服器打不開，請到 GitHub Releases 重新下載完整版。'
     }
 } catch {
