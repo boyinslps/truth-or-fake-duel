@@ -367,6 +367,29 @@ export function createApp(opts: AppOptions): App {
     }
     res.json({ ok: true });
   });
+  // 重設排行榜：積分、勝敗歸零（保留帳號與暱稱）。需要 body.confirm === true，避免誤觸。
+  app.post('/api/teacher/reset-scores', (req, res) => {
+    if (req.body?.confirm !== true) return void res.status(400).json({ error: '需要確認' });
+    const list = store.resetScores();
+    const ids = new Set(list.map((a) => a.id));
+    for (const s of sessions.values()) {
+      const acc = s.accountId && ids.has(s.accountId) ? store.get(s.accountId) : undefined;
+      if (acc) socketOf(s.token)?.emit('profile', profileOf(acc));
+    }
+    res.json({ ok: true, count: list.length });
+  });
+  // 刪除全部學生帳號（電腦玩家保留）。
+  app.post('/api/teacher/students/delete-all', (req, res) => {
+    if (req.body?.confirm !== true) return void res.status(400).json({ error: '需要確認' });
+    const ids = new Set(store.removeAllStudents());
+    for (const s of sessions.values()) {
+      if (!s.accountId || !ids.has(s.accountId)) continue;
+      removeFromQueue(s.token);
+      s.accountId = null;
+      socketOf(s.token)?.emit('logged_out', { reason: 'removed' });
+    }
+    res.json({ ok: true, count: ids.size });
+  });
 
   if (opts.staticDir && existsSync(opts.staticDir)) {
     app.use(express.static(opts.staticDir));

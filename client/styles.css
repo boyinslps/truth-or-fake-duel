@@ -746,3 +746,5 @@ html.in-game, html.in-game body { overflow: hidden; height: 100%; }
   .lb-row { grid-template-columns: 32px minmax(0, 1fr) 52px; }
   .lb-row .tier-badge { display: none; }
 }
+
+.teacher-bulk { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }

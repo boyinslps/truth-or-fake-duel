@@ -102,6 +102,32 @@ export function Teacher() {
       <label className="teacher-toggle">
         <input type="checkbox" checked={showBots} onChange={(e) => setShowBots(e.target.checked)} /> 顯示電腦玩家（學生看不到這個標記）
       </label>
+      <div className="teacher-bulk">
+        <button
+          className="btn small"
+          onClick={async () => {
+            if (confirm('把全部學生的積分、勝敗、判斷紀錄歸零？\n帳號和暱稱會保留，歸零後不能復原。')) {
+              await post('/api/teacher/reset-scores', { confirm: true });
+              load();
+            }
+          }}
+        >
+          重設排行榜（積分與戰績歸零）
+        </button>
+        <button
+          className="btn small ghost"
+          onClick={async () => {
+            const n = data.accounts.filter((a) => !a.bot).length;
+            if (n === 0) return alert('目前沒有學生帳號');
+            if (prompt(`這會刪除全部 ${n} 個學生帳號，包含積分與戰績，不能復原。\n確定的話，請輸入「刪除」兩個字：`) === '刪除') {
+              await post('/api/teacher/students/delete-all', { confirm: true });
+              load();
+            }
+          }}
+        >
+          刪除全部學生帳號
+        </button>
+      </div>
       <label className="teacher-toggle">
         排序{' '}
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'record' | 'seat')}>

@@ -85,6 +85,29 @@ describe('帳號', () => {
     expect(s.leaderboard(players[0], 'all').mine).toBeNull();
   });
 
+  it('重設排行榜：學生積分戰績歸零但帳號保留；電腦玩家不受影響', () => {
+    const s = new Store(null);
+    ensureBots(s, 1000, seeded(1));
+    const botBefore = s.all().filter((a) => a.bot).map((a) => a.points);
+    const a = s.create({ grade: 5, classNo: 3, seat: 1, name: '', nickname: 'A', points: 320, wins: 9, losses: 4, draws: 1, games: 14, judged: 30, correct: 20, tutorialDone: true }, 1);
+    s.resetScores();
+    expect(a).toMatchObject({ points: 0, wins: 0, losses: 0, draws: 0, games: 0, judged: 0, correct: 0, nickname: 'A', tutorialDone: true });
+    expect(s.get(a.id)).toBe(a);
+    expect(s.all().filter((x) => x.bot).map((x) => x.points)).toEqual(botBefore);
+  });
+
+  it('刪除全部學生帳號：電腦玩家保留', () => {
+    const s = new Store(null);
+    ensureBots(s, 1000, seeded(1));
+    const bots = s.all().length;
+    const a = s.create({ grade: 5, classNo: 3, seat: 1, name: '', nickname: 'A' }, 1);
+    s.create({ grade: 5, classNo: 3, seat: 2, name: '', nickname: 'B' }, 2);
+    expect(s.removeAllStudents()).toHaveLength(2);
+    expect(s.get(a.id)).toBeUndefined();
+    expect(s.all()).toHaveLength(bots);
+    expect(s.leaderboard(a, 'all').rows).toEqual([]);
+  });
+
   it('回饋：存進檔案、限制長度與頻率、可刪除', () => {
     const file = join(mkdtempSync(join(tmpdir(), 'zj-')), 'players.json');
     const st = new Store(file);

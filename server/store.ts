@@ -146,6 +146,35 @@ export class Store {
     return ok;
   }
 
+  /** 真人學生帳號（不含電腦玩家與教學小幫手）。 */
+  students(): Account[] {
+    return this.all().filter((a) => !a.bot && !a.coach);
+  }
+
+  /** 學生的積分、勝敗和判斷紀錄全部歸零；帳號、暱稱、教學完成紀錄保留。回傳受影響的帳號。 */
+  resetScores(): Account[] {
+    const list = this.students();
+    for (const a of list) {
+      a.points = 0;
+      a.wins = 0;
+      a.losses = 0;
+      a.draws = 0;
+      a.games = 0;
+      a.judged = 0;
+      a.correct = 0;
+    }
+    if (list.length) this.changed();
+    return list;
+  }
+
+  /** 刪除全部學生帳號（電腦玩家與教學小幫手保留）。回傳被刪掉的帳號 id。 */
+  removeAllStudents(): string[] {
+    const ids = this.students().map((a) => a.id);
+    for (const id of ids) this.accounts.delete(id);
+    if (ids.length) this.changed();
+    return ids;
+  }
+
   /** 修改帳號後呼叫，稍後統一寫檔。 */
   changed() {
     if (!this.file || this.timer) return;

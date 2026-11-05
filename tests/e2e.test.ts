@@ -189,6 +189,24 @@ describe('端對端對局', () => {
     for (const x of [a, b]) x.socket.close();
   });
 
+  it('老師頁「重設排行榜」要確認才會執行，執行後線上學生收到歸零的個人資料', async () => {
+    const a = await connect();
+    const seat = ++seatNo;
+    await login(a, { seat });
+    const acc = app.store.findStudent(5, 3, seat)!;
+    acc.points = 120;
+    acc.wins = 3;
+    const post = (path: string, body: unknown) =>
+      fetch(`${url}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    expect((await post('/api/teacher/reset-scores', {})).status).toBe(400);
+    expect(acc.points).toBe(120);
+    const profile = new Promise<ProfileView>((res) => a.socket.once('profile', res));
+    expect((await post('/api/teacher/reset-scores', { confirm: true })).status).toBe(200);
+    expect(await profile).toMatchObject({ points: 0, wins: 0, games: 0 });
+    expect(acc.points).toBe(0);
+    a.socket.close();
+  });
+
   it('連續斷線超過時限判負', async () => {
     const a = await player();
     const b = await player();
