@@ -12,6 +12,7 @@ import type { Content } from './content';
 import { applyAction, createGame, setConnected, tick, view, type Action, type GameState } from './engine';
 import { checkLogin, checkNickname, checkSeat, profileOf, Store, whoOf, type Account } from './store';
 import { BotBrain, ensureBots, pickBot, skillFor } from './bot';
+import { pickPair } from './matchmaking';
 
 const COLORS = ['藍色', '紅色', '綠色', '黃色', '紫色', '橘色', '白色', '銀色', '金色', '粉紅'];
 const ANIMALS = ['貓頭鷹', '海豚', '狐狸', '熊貓', '企鵝', '松鼠', '老虎', '兔子', '烏龜', '鯨魚'];
@@ -227,9 +228,17 @@ export function createApp(opts: AppOptions): App {
   function tryMatch() {
     // 只配對目前連線中的人
     for (let i = queue.length - 1; i >= 0; i--) if (!socketOf(queue[i])) removeFromQueue(queue[i]);
-    while (queue.length >= 2) {
-      const a = queue[0];
-      const b = queue[1];
+    // 強配強、弱配弱：牌位相近的先配，排越久放寬越多
+    for (;;) {
+      const t = now();
+      const cands = queue.map((token) => ({
+        points: accountOf(sessions.get(token))?.points ?? 0,
+        waitedMs: t - (queuedAt.get(token) ?? t),
+      }));
+      const pair = pickPair(cands);
+      if (!pair) break;
+      const a = queue[pair[0]];
+      const b = queue[pair[1]];
       removeFromQueue(a);
       removeFromQueue(b);
       offerMatch([a, b], null);
@@ -578,6 +587,8 @@ export function createApp(opts: AppOptions): App {
       }
       tryMatch();
     }
+    // 排隊中的人，每過一陣子可接受的牌位差距會放寬，所以要定期重新配對
+    if (queue.length >= 2) tryMatch();
     // 排隊太久沒有真人：改配電腦玩家
     if (botWait) {
       for (const token of [...queue]) {

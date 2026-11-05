@@ -170,6 +170,25 @@ describe('端對端對局', () => {
     for (const x of [a, b, c]) x.socket.close();
   });
 
+  it('牌位差一級：剛排隊不配，等滿 5 秒後才配', async () => {
+    const a = await connect();
+    const b = await connect();
+    const sa = ++seatNo;
+    const sb = ++seatNo;
+    await login(a, { seat: sa });
+    await login(b, { seat: sb });
+    app.store.findStudent(5, 3, sa)!.points = 20;
+    app.store.findStudent(5, 3, sb)!.points = 120;
+    const t0 = Date.now();
+    a.socket.emit('queue_join');
+    b.socket.emit('queue_join');
+    await new Promise((r) => setTimeout(r, 2500));
+    expect(a.events).not.toContain('match_found');
+    await waitFor(() => a.events.includes('match_found') && b.events.includes('match_found'), 8000);
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(4800);
+    for (const x of [a, b]) x.socket.close();
+  });
+
   it('連續斷線超過時限判負', async () => {
     const a = await player();
     const b = await player();
