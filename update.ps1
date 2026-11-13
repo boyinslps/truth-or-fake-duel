@@ -73,6 +73,13 @@ try {
     robocopy $inner.FullName $root /E /XD node-portable node_modules data .git /XF .version update-class.bat /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "複製檔案失敗（robocopy 代碼 $LASTEXITCODE）" }
 
+    # .bat 必須是 CRLF 換行，LF 的 .bat 在 cmd 會解析錯亂（start-class.bat 打不開）；update-class.bat 正在執行，不動它
+    Get-ChildItem -Path $root -Filter *.bat -File | Where-Object { $_.Name -ne 'update-class.bat' } | ForEach-Object {
+        $text = [IO.File]::ReadAllText($_.FullName)
+        $fixed = [regex]::Replace($text, "(?<!`r)`n", "`r`n")
+        if ($fixed -ne $text) { [IO.File]::WriteAllText($_.FullName, $fixed, (New-Object Text.UTF8Encoding $false)) }
+    }
+
     Set-Content -Path $versionFile -Value $remote -Encoding ascii
     $lockAfter = if (Test-Path $lock) { (Get-FileHash $lock).Hash } else { '' }
 

@@ -1,0 +1,4 @@
+# .bat 必須是 CRLF 換行，否則 Windows 的 cmd 會解析錯亂（下載 zip 或更新後 start-class.bat 就會壞掉）。
+# -text：不讓 git 轉換換行，檔案內容原樣進 git，GitHub 的 zip 下載也是 CRLF。
+*.bat -text
+*.cmd -text
