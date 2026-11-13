@@ -133,7 +133,7 @@ function NicknameEditor({ nickname }: { nickname: string }) {
 }
 
 export function Home() {
-  const { profile, cancelled, nicknameError } = useNet();
+  const { profile, cancelled, nicknameError, paused } = useNet();
   if (!profile) return null;
   const acc = profile.accuracy === null ? null : Math.round(profile.accuracy * 100);
   return (
@@ -166,9 +166,10 @@ export function Home() {
             <Icon name="trophy" color="var(--function)" /> 先搶到 7 分的人獲勝，最多 12 回合。
           </li>
         </ul>
-        {cancelled && <p className="notice warn">{cancelled}</p>}
-        <button className="btn primary big" onClick={actions.joinQueue}>
-          開始對戰
+        {paused && <p className="notice warn">老師暫停了比賽，等老師說可以再開始。</p>}
+        {cancelled && !paused && <p className="notice warn">{cancelled}</p>}
+        <button className="btn primary big" onClick={actions.joinQueue} disabled={paused}>
+          {paused ? '比賽暫停中' : '開始對戰'}
         </button>
         <div className="row">
           <button className="btn" onClick={() => actions.openLeaderboard('all')}>

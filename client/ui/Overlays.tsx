@@ -190,6 +190,8 @@ function reasonText(view: PlayerView): string {
       return iWon ? '對手離開了對局' : '你離開了對局';
     case 'disconnect':
       return iWon ? '對手斷線太久' : '你斷線太久';
+    case 'paused':
+      return '老師暫停了比賽，這局不算輸贏';
     default:
       return '雙方都斷線，這局不算';
   }

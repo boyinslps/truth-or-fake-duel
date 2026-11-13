@@ -76,13 +76,16 @@ describe('帳號', () => {
     expect(s.leaderboard(other, 'class').rows.map((r) => r.nickname)).toEqual(['B']);
   });
 
-  it('榜單最多 20 人，自己不在前 20 名時另外附上自己那一列', () => {
+  it('榜單列出所有學生（不因名額把人擠掉），離線的學生一樣在榜上，只標示離線', () => {
     const s = new Store(null);
-    const players = Array.from({ length: 25 }, (_, i) => s.create({ grade: 4, classNo: 1, seat: i + 1, name: '', nickname: 'P' + i, games: 1, points: 300 - i * 10 }, i));
-    const board = s.leaderboard(players[24], 'all');
-    expect(board.rows).toHaveLength(20);
-    expect(board.mine).toMatchObject({ nickname: 'P24', rank: 25 });
-    expect(s.leaderboard(players[0], 'all').mine).toBeNull();
+    const players = Array.from({ length: 45 }, (_, i) => s.create({ grade: 4, classNo: 1, seat: i + 1, name: '', nickname: 'P' + i, games: i < 20 ? 1 : 0, points: i < 20 ? 300 - i * 10 : 0 }, i));
+    const online = new Set([players[0].id, players[44].id]);
+    const board = s.leaderboard(players[44], 'all', online);
+    expect(board.rows).toHaveLength(45);
+    expect(board.mine).toBeNull();
+    expect(board.rows.find((r) => r.nickname === 'P30')).toMatchObject({ online: false });
+    expect(board.rows.filter((r) => r.online).map((r) => r.nickname).sort()).toEqual(['P0', 'P44']);
+    expect(board.rows.find((r) => r.me)).toMatchObject({ nickname: 'P44', online: true });
   });
 
   it('重設排行榜：學生積分戰績歸零但帳號保留；電腦玩家不受影響', () => {

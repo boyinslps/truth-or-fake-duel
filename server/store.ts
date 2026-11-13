@@ -48,7 +48,8 @@ interface FileShape {
   feedback?: FeedbackEntry[];
 }
 
-const LEADERBOARD_SIZE = 20;
+/** 排行榜最多列幾人（全班加全校也遠小於這個數字，離線的學生不能因為名額被擠掉）。 */
+const LEADERBOARD_SIZE = 500;
 export const FEEDBACK_MAX_CHARS = 300;
 const FEEDBACK_GAP_MS = 15_000;
 const FEEDBACK_PER_ACCOUNT = 30;
@@ -193,7 +194,7 @@ export class Store {
   }
 
   /** 排行榜：只有真人學生（電腦玩家不上榜），登入過就在榜上，依積分、勝場排序。 */
-  leaderboard(me: Account, scope: 'all' | 'class'): LeaderboardView {
+  leaderboard(me: Account, scope: 'all' | 'class', online: ReadonlySet<string> = new Set()): LeaderboardView {
     const pool = this.all().filter(
       (a) => !a.bot && (scope === 'all' || (a.grade === me.grade && a.classNo === me.classNo)),
     );
@@ -206,6 +207,7 @@ export class Store {
       wins: a.wins,
       games: a.games,
       me: a.id === me.id,
+      online: online.has(a.id),
     });
     const rows = pool.slice(0, LEADERBOARD_SIZE).map(row);
     const myIndex = pool.findIndex((a) => a.id === me.id);

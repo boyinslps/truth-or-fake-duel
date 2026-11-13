@@ -216,6 +216,50 @@ describe('端對端對局', () => {
     a.socket.close();
   });
 
+  it('老師暫停比賽：進行中的對局作廢、雙方不計輸贏，暫停期間不能排隊，恢復後可以', async () => {
+    const a = await player();
+    const b = await player();
+    autoplay(a);
+    autoplay(b);
+    a.socket.emit('queue_join');
+    b.socket.emit('queue_join');
+    await waitFor(() => Boolean(a.last) && Boolean(b.last) && a.last!.phase !== 'game_over');
+    const pointsOf = (bot: Bot) => app.store.all().find((x) => x.nickname === bot.last!.me.nickname)!;
+    const before = [pointsOf(a), pointsOf(b)].map((x) => [x.points, x.wins, x.losses, x.draws, x.games]);
+    const post = (path: string, body: unknown) =>
+      fetch(`${url}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+    try {
+    const res = await post('/api/teacher/pause', { paused: true });
+    const body = (await res.json()) as { ok: boolean; paused: boolean; stopped: number };
+    expect(body).toMatchObject({ ok: true, paused: true });
+    expect(body.stopped).toBeGreaterThanOrEqual(1); // 其他測試留下還沒打完的對局也會一起被停止
+    await waitFor(() => a.last?.phase === 'game_over' && b.last?.phase === 'game_over', 5000);
+    expect(a.last!.gameOver).toEqual({ winner: 'void', reason: 'paused' });
+    expect(b.last!.gameOver).toEqual({ winner: 'void', reason: 'paused' });
+    await new Promise((r) => setTimeout(r, 200));
+    expect([pointsOf(a), pointsOf(b)].map((x) => [x.points, x.wins, x.losses, x.draws, x.games])).toEqual(before);
+    expect((await (await fetch(`${url}/api/teacher/overview`)).json()).paused).toBe(true);
+
+    // 暫停中：排隊會被擋下，收到 match_paused
+    const blocked = new Promise<{ paused: boolean }>((res2) => a.socket.once('match_paused', res2));
+    a.socket.emit('queue_join');
+    expect(await blocked).toEqual({ paused: true });
+
+    // 恢復後可以重新排隊並配對
+    expect(await (await post('/api/teacher/pause', { paused: false })).json()).toMatchObject({ paused: false });
+    const found = new Promise<void>((res2) => a.socket.once('match_found', () => res2()));
+    a.socket.emit('queue_join');
+    b.socket.emit('queue_join');
+    await found;
+    } finally {
+      // 不論測試成功與否都要恢復，否則後面的測試都排不了隊
+      await post('/api/teacher/pause', { paused: false });
+      a.socket.close();
+      b.socket.close();
+    }
+  });
+
   it('連續斷線超過時限判負', async () => {
     const a = await player();
     const b = await player();

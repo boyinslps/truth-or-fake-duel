@@ -186,7 +186,7 @@ export interface DuelView {
 
 export interface GameOverInfo {
   winner: PlayerId | 'draw' | 'void';
-  reason: 'score' | 'max_rounds' | 'forfeit' | 'disconnect' | 'void';
+  reason: 'score' | 'max_rounds' | 'forfeit' | 'disconnect' | 'void' | 'paused';
 }
 
 export interface PlayerView {
@@ -262,7 +262,7 @@ export interface ProfileView {
   tutorialDone: boolean;
 }
 
-/** 排行榜只顯示暱稱，不顯示班級座號與真實姓名。 */
+/** 排行榜一列：顯示暱稱與班級座號，不顯示真實姓名；離線的學生一樣留在榜上。 */
 export interface LeaderboardRow {
   rank: number;
   nickname: string;
@@ -272,6 +272,8 @@ export interface LeaderboardRow {
   wins: number;
   games: number;
   me: boolean;
+  /** 目前是否在線上（離線的學生不會從榜上消失，只是標示離線）。 */
+  online: boolean;
 }
 
 export interface LeaderboardView {

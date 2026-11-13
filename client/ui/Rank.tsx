@@ -1,5 +1,5 @@
 // 牌位徽章、升級進度、積分變化與排行榜（企畫書第 18 節）。
-import type { CSSProperties } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import type { LeaderboardRow, RankChange } from '../../shared/types';
 import { nextTier, tierOf } from '../../shared/rank';
 import { actions, useNet } from '../net';
@@ -53,11 +53,11 @@ const MEDAL = ['#FFD60A', '#C8D6CE', '#FF9F43'];
 function TopCard({ r }: { r: LeaderboardRow }) {
   const medal = MEDAL[r.rank - 1];
   return (
-    <div className={`lb-top p${r.rank}${r.me ? ' me' : ''}`} style={{ '--medal': medal } as CSSProperties}>
+    <div className={`lb-top p${r.rank}${r.me ? ' me' : ''}${r.online ? '' : ' offline'}`} style={{ '--medal': medal } as CSSProperties}>
       <Icon name="trophy" size={r.rank === 1 ? 52 : 38} color={medal} />
       <div className="lb-top-main">
         <span className="lb-top-rank">第 {r.rank} 名</span>
-        <span className="lb-top-nick">{r.nickname}</span>
+        <span className="lb-top-nick">{r.nickname}{!r.online && <small className="lb-off">離線</small>}</span>
         {r.who && <span className="lb-who">{r.who}</span>}
         <TierBadge points={r.points} />
       </div>
@@ -72,10 +72,10 @@ function TopCard({ r }: { r: LeaderboardRow }) {
 
 function ListRow({ r }: { r: LeaderboardRow }) {
   return (
-    <li className={'lb-row' + (r.me ? ' me' : '')}>
+    <li className={'lb-row' + (r.me ? ' me' : '') + (r.online ? '' : ' offline')}>
       <span className="lb-rank">{r.rank}</span>
       <span className="lb-name">
-        <b>{r.nickname}</b>
+        <b>{r.nickname}{!r.online && <small className="lb-off">離線</small>}</b>
         {r.who && <small className="lb-who">{r.who}</small>}
       </span>
       <TierBadge points={r.points} />
@@ -87,6 +87,11 @@ function ListRow({ r }: { r: LeaderboardRow }) {
 export function Leaderboard() {
   const { leaderboard, profile } = useNet();
   const scope = leaderboard?.scope ?? 'all';
+  // 開著排行榜時每 5 秒更新一次，名次和誰在線上才是最新的
+  useEffect(() => {
+    const t = setInterval(() => actions.refreshLeaderboard(scope), 5000);
+    return () => clearInterval(t);
+  }, [scope]);
   const top = leaderboard ? leaderboard.rows.slice(0, 3) : [];
   const rest = leaderboard ? leaderboard.rows.slice(3) : [];
   const mine = leaderboard?.mine ?? null;

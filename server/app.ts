@@ -9,7 +9,7 @@ import { Server, type Socket } from 'socket.io';
 import type { Choice, FunctionName, PlayerId, RankChange } from '../shared/types';
 import { applyOutcome, tierOf, type Outcome } from '../shared/rank';
 import type { Content } from './content';
-import { applyAction, createGame, setConnected, tick, view, type Action, type GameState } from './engine';
+import { abortGame, applyAction, createGame, setConnected, tick, view, type Action, type GameState } from './engine';
 import { checkLogin, checkNickname, checkSeat, profileOf, Store, whoOf, type Account } from './store';
 import { BotBrain, ensureBots, pickBot, skillFor } from './bot';
 import { pickPair } from './matchmaking';
@@ -100,6 +100,13 @@ export function createApp(opts: AppOptions): App {
   /** 「本節課」統計：老師按「開始新的一節課」就歸零，只記真人學生這一節的勝場、場數、積分變化。 */
   const lesson = new Map<string, { wins: number; games: number; points: number }>();
   let lessonStartedAt = now();
+  /** 老師按「暫停比賽」之後為 true：進行中的對局已作廢，學生不能開始新的對局。 */
+  let paused = false;
+  const onlineAccountIds = () => {
+    const ids = new Set<string>();
+    for (const s of sessions.values()) if (s.socketId && s.accountId) ids.add(s.accountId);
+    return ids;
+  };
   const lessonOf = (id: string) => {
     let l = lesson.get(id);
     if (!l) lesson.set(id, (l = { wins: 0, games: 0, points: 0 }));
@@ -332,6 +339,7 @@ export function createApp(opts: AppOptions): App {
       online: online.size,
       playing,
       lessonStartedAt,
+      paused,
       feedback: store.feedbackAll(),
       accounts: store.all().map((a) => ({
         id: a.id,
@@ -387,6 +395,31 @@ export function createApp(opts: AppOptions): App {
     res.json({ ok: true });
   });
   // 開始新的一節課：只把「本節」統計歸零，累積的積分與戰績不動。
+  // 暫停／恢復比賽。暫停：進行中的對局立刻作廢（雙方不計輸贏）、取消配對與排隊，之後學生不能開始新對局；
+  // 新手教學不是比賽，不受影響。恢復：學生可以重新排隊。
+  app.post('/api/teacher/pause', (req, res) => {
+    const next = req.body?.paused === true;
+    paused = next;
+    let stopped = 0;
+    if (next) {
+      for (const game of games.values()) {
+        if (game.over || tutorialGames.has(game.id)) continue;
+        abortGame(game);
+        flush(game);
+        stopped++;
+      }
+      for (const m of [...pending.values()]) {
+        pending.delete(m.id);
+        for (const token of m.tokens) if (!sessions.get(token)?.bot) socketOf(token)?.emit('match_cancelled', { reason: 'paused' });
+      }
+      for (const token of [...queue]) {
+        removeFromQueue(token);
+        socketOf(token)?.emit('match_cancelled', { reason: 'paused' });
+      }
+    }
+    io.emit('match_paused', { paused });
+    res.json({ ok: true, paused, stopped });
+  });
   app.post('/api/teacher/lesson/new', (_req, res) => {
     lesson.clear();
     lessonStartedAt = now();
@@ -452,7 +485,7 @@ export function createApp(opts: AppOptions): App {
       s.socketId = socket.id;
       if (prev && prev.id !== socket.id) prev.disconnect(true);
       const acc = accountOf(s);
-      socket.emit('welcome', { token, profile: acc ? profileOf(acc) : null, inGame: Boolean(activeGame(s)) });
+      socket.emit('welcome', { token, profile: acc ? profileOf(acc) : null, inGame: Boolean(activeGame(s)), paused });
       attach(s);
     });
 
@@ -560,12 +593,13 @@ export function createApp(opts: AppOptions): App {
     socket.on('get_leaderboard', (msg: { scope?: string } = {}) => {
       const acc = accountOf(session);
       if (!acc) return;
-      socket.emit('leaderboard', store.leaderboard(acc, msg.scope === 'class' ? 'class' : 'all'));
+      socket.emit('leaderboard', store.leaderboard(acc, msg.scope === 'class' ? 'class' : 'all', onlineAccountIds()));
     });
 
     socket.on('queue_join', () => {
       if (!session || activeGame(session)) return;
       if (!accountOf(session)) return void socket.emit('login_required');
+      if (paused) return void socket.emit('match_paused', { paused: true });
       session.gameId = null;
       session.pid = null;
       enqueue(session.token);

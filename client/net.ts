@@ -56,6 +56,8 @@ export interface NetState {
   freshFacts: string[];
   bursts: Burst[];
   lastDuel: DuelResult | null;
+  /** 老師暫停比賽中：不能開始新的對局。 */
+  paused: boolean;
 }
 
 let state: NetState = {
@@ -83,6 +85,7 @@ let state: NetState = {
   freshFacts: [],
   bursts: [],
   lastDuel: null,
+  paused: false,
 };
 const listeners = new Set<() => void>();
 function set(patch: Partial<NetState>) {
@@ -128,9 +131,9 @@ socket.on('connect', () => {
   socket.emit('hello', { token: readToken() });
 });
 socket.on('disconnect', () => set({ connected: false }));
-socket.on('welcome', (w: { token: string; profile: ProfileView | null }) => {
+socket.on('welcome', (w: { token: string; profile: ProfileView | null; paused?: boolean }) => {
   saveToken(w.token);
-  set({ token: w.token, profile: w.profile, authReady: true });
+  set({ token: w.token, profile: w.profile, authReady: true, paused: Boolean(w.paused) });
 });
 socket.on('logged_in', (w: { token: string; profile: ProfileView }) => {
   saveToken(w.token);
@@ -161,9 +164,16 @@ socket.on('match_found', (m: { matchId: string; opponentNickname: string; oppone
 socket.on('match_cancelled', (m: { reason: string }) => {
   if (m.reason === 'opponent_not_ready') {
     set({ match: null, cancelled: '對手沒有按準備，已幫你重新排隊。' });
+  } else if (m.reason === 'paused') {
+    set({ match: null, matching: null, cancelled: '老師暫停了比賽，已離開配對。' });
   } else {
     set({ match: null, matching: null, cancelled: '你沒有在時間內按準備，已離開配對。' });
   }
+});
+socket.on('match_paused', (e: { paused: boolean }) => {
+  const changed = e.paused !== state.paused;
+  set({ paused: e.paused, ...(e.paused ? { matching: null, match: null } : {}) });
+  if (changed) toast(e.paused ? '老師暫停了比賽' : '老師恢復比賽了，可以開始對戰', e.paused ? 'warn' : 'info');
 });
 socket.on('state_snapshot', (v: PlayerView) => {
   const prev = state.view;
@@ -238,6 +248,8 @@ export const actions = {
     set({ showLeaderboard: true });
     socket.emit('get_leaderboard', { scope });
   },
+  /** 排行榜開著時定期重抓（不改變畫面狀態），才看得到最新名次與誰在線上。 */
+  refreshLeaderboard: (scope: 'all' | 'class') => socket.emit('get_leaderboard', { scope }),
   closeLeaderboard: () => set({ showLeaderboard: false, leaderboard: null }),
   joinQueue: () => {
     set({ view: null, cancelled: null, lastDuel: null, rankChange: null });

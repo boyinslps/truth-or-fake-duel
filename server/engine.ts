@@ -429,6 +429,12 @@ function finish(s: GameState, info: GameOverInfo) {
   emit(s, 'all', 'phase_changed', { phase: 'game_over', deadline: null, round: s.round });
 }
 
+/** 老師暫停比賽：立刻結束這一局，雙方都不計輸贏（和雙方都斷線的作廢一樣不結算牌位）。 */
+export function abortGame(s: GameState) {
+  if (s.over) return;
+  finish(s, { winner: 'void', reason: 'paused' });
+}
+
 // ───────────────────────────── 直接對決 ─────────────────────────────
 
 function startDuel(s: GameState, pid: PlayerId, now: number) {
